@@ -79,7 +79,7 @@ body.modal-open{overflow:hidden}
 .booking-list{display:grid;gap:12px}.booking-row{display:grid;grid-template-columns:1.3fr 1fr auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:18px;background:#ffffff04}.booking-row h3{font-size:15px}.booking-row p{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}.row-actions{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
 .dashboard-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.stat{border:1px solid var(--line);border-radius:18px;padding:18px;background:#ffffff04}.stat b{display:block;font-size:25px}.stat span{display:block;color:#777e8c;font-size:10px;text-transform:uppercase;letter-spacing:.12em;margin-top:6px}
 .app-close{position:fixed;right:24px;top:22px;z-index:99999;border:1px solid var(--line);background:#0c101c;color:#fff;border-radius:12px;width:42px;height:42px;font-size:22px;cursor:pointer}.app-note{font-size:11px;color:#777e8c;margin-top:12px;line-height:1.5}
-.confirm-box{width:min(500px,92vw)} .confirm-status{display:flex;align-items:center;gap:10px;margin-top:18px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:#ffffff04;color:var(--muted);font-size:12px}
+.confirm-box{width:min(500px,92vw)}
 @media(max-width:850px){.app-view{padding:95px 5% 35px}.app-grid,.dashboard-grid{grid-template-columns:1fr}.searchbar{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.booking-row{grid-template-columns:1fr}.row-actions{justify-content:flex-start}.app-top{align-items:start;flex-direction:column}.stat-grid{grid-template-columns:1fr 1fr}}
 
 /* Chai Visual-inspired palette: restrained orange/blue on deep ink, transparent rather than glossy */
@@ -387,7 +387,7 @@ hero h1 .find-word{letter-spacing:.06em;}.hero h1{font-size:clamp(2rem,6vw,7rem)
 <div class="app-view" id="dashboardView" aria-hidden="true">
   <button class="app-close" data-view-close aria-label="Close dashboard">×</button>
   <div class="app-shell">
-    <div class="app-top"><div><div class="kicker">CREATOR DASHBOARD</div><h2>Run your gigs.</h2><p>Post services, manage incoming bookings, and accept or decline requests.</p><div style="margin-top:14px;max-width:280px"><label class="form-label" for="dashboardCreator">VIEWING AS CREATOR</label><select class="app-select" id="dashboardCreator"></select></div></div><div class="app-actions"><button class="mini-btn" id="dashboardBrowse">Browse marketplace</button><button class="mini-btn" id="dashboardBookings">My bookings</button></div></div>
+    <div class="app-top"><div><div class="kicker">CREATOR DASHBOARD</div><h2>Run your gigs.</h2><p>Post services, manage incoming bookings, and accept or decline requests.</p></div><div class="app-actions"><button class="mini-btn" id="dashboardBrowse">Browse marketplace</button><button class="mini-btn" id="dashboardBookings">My bookings</button></div></div>
     <div class="stat-grid" id="dashboardStats"></div>
     <div class="dashboard-grid">
       <div class="app-card"><div class="kicker">POST A GIG</div><h3>Create a service</h3><p>List a service with title, category, rate, and description.</p>
@@ -412,16 +412,6 @@ hero h1 .find-word{letter-spacing:.06em;}.hero h1{font-size:clamp(2rem,6vw,7rem)
     <button class="modal-close" data-close="bookingModal" aria-label="Close">×</button>
     <div class="kicker">BOOK A GIG</div><h2 id="bookingTitle">Send a booking.</h2><p class="modal-sub" id="bookingGigInfo">Tell the creator what you need.</p>
     <form id="bookingForm"><input id="bookingClient" required maxlength="40" placeholder="Your name"/><input id="bookingProject" required maxlength="120" placeholder="Project / requirement"/><input id="bookingDeadline" type="date"/><button class="btn primary" type="submit">Confirm booking</button></form><div class="status" id="bookingStatus"></div>
-  </div>
-</div>
-<div class="modal-backdrop" id="bookingConfirmation" aria-hidden="true">
-  <div class="modal-box confirm-box">
-    <button class="modal-x" data-close="bookingConfirmation" aria-label="Close">×</button>
-    <div class="kicker">BOOKING CONFIRMED</div>
-    <h2>Request sent successfully.</h2>
-    <p class="modal-sub" id="confirmationText">Your booking is now Pending and the creator can respond from their dashboard.</p>
-    <div class="confirm-status"><span class="status-pill status-pending">PENDING</span><span>Waiting for creator response</span></div>
-    <div class="card-actions" style="margin-top:18px"><button class="mini-btn primary" id="viewBookingsAfterConfirm">View my bookings</button><button class="mini-btn" id="closeConfirmOnly">Continue browsing</button></div>
   </div>
 </div>
 <main>
@@ -558,41 +548,12 @@ function openBooking(id){selectedGigId=id;const g=gigs.find(x=>x.id===id);if(!g)
 function closeBooking(){const m=document.getElementById('bookingModal');m.classList.remove('open');m.setAttribute('aria-hidden','true')}
 document.querySelectorAll('[data-close="bookingModal"]').forEach(x=>x.addEventListener('click',closeBooking));
 document.getElementById('bookingModal')?.addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeBooking()});
-document.getElementById('bookingForm')?.addEventListener('submit',e=>{
-  e.preventDefault();
-  const g=gigs.find(x=>x.id===selectedGigId);
-  if(!g)return;
-  const client=document.getElementById('bookingClient').value.trim();
-  const project=document.getElementById('bookingProject').value.trim();
-  const deadline=document.getElementById('bookingDeadline').value;
-  if(!client||!project)return;
-  const already=bookings.some(b=>b.gigId===g.id&&b.status!=='Declined');
-  if(already){
-    document.getElementById('bookingStatus').textContent='This gig already has an active booking request. Please choose another gig.';
-    return;
-  }
-  bookings.unshift({id:'b'+Date.now(),gigId:g.id,gigTitle:g.title,creator:g.creator,client,project,deadline,status:'Pending',createdAt:Date.now()});
-  saveBookings();
-  renderAll();
-  closeBooking();
-  const cm=document.getElementById('bookingConfirmation');
-  if(cm){
-    document.getElementById('confirmationText').textContent=`Your request for ${g.title} was sent to ${g.creator}. The creator can accept or decline it from their dashboard.`;
-    cm.classList.add('open');
-    cm.setAttribute('aria-hidden','false');
-  }
-});
+document.getElementById('bookingForm')?.addEventListener('submit',e=>{e.preventDefault();const g=gigs.find(x=>x.id===selectedGigId);if(!g)return;const client=document.getElementById('bookingClient').value.trim();const project=document.getElementById('bookingProject').value.trim();const deadline=document.getElementById('bookingDeadline').value;if(!client||!project)return;const already=bookings.some(b=>b.gigId===g.id&&b.status!=='Declined');if(already){document.getElementById('bookingStatus').textContent='This gig already has an active booking request. Please choose another gig.';return}bookings.unshift({id:'b'+Date.now(),gigId:g.id,gigTitle:g.title,creator:g.creator,client,project,deadline,status:'Pending',createdAt:Date.now()});saveBookings();document.getElementById('bookingStatus').textContent='Booking sent. Status: Pending.';renderAll();setTimeout(()=>{closeBooking();openView('bookingsView')},500)});
 function statusClass(s){return s==='Accepted'?'status-accepted':s==='Declined'?'status-declined':'status-pending'}
 function renderBookings(){const list=document.getElementById('myBookingList');if(!list)return;if(!bookings.length){list.innerHTML='<div class="empty-state">No bookings yet. Browse the marketplace to book a gig.</div>';return}list.innerHTML=bookings.map(b=>`<article class="booking-row"><div><h3>${esc(b.gigTitle)}</h3><p>Creator: ${esc(b.creator)} · Client: ${esc(b.client)}<br>${esc(b.project)}${b.deadline?' · Deadline: '+esc(b.deadline):''}</p></div><div><span class="status-pill ${statusClass(b.status)}">${esc(b.status)}</span><p>${b.status==='Declined'?'The creator declined this request. You can book another gig.':b.status==='Accepted'?'Your booking was accepted. Coordinate the project with the creator.':'Waiting for the creator to respond.'}</p></div><div class="row-actions"><button class="mini-btn" data-rebook="${esc(b.gigId)}">Book another</button></div></article>`).join('');list.querySelectorAll('[data-rebook]').forEach(b=>b.addEventListener('click',()=>{closeViews();openView('marketplaceView')}))}
-function renderDashboard(){const creatorSelect=document.getElementById('dashboardCreator');if(creatorSelect){const current=creatorSelect.value;creatorSelect.innerHTML=creators.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(current&&creators.some(c=>c.name===current))creatorSelect.value=current;}const me=(creatorSelect?.value||document.getElementById('gigCreator')?.value||creators[0]?.name||'Creator').trim();const mine=bookings.filter(b=>b.creator===me);const posted=gigs.filter(g=>g.creator===me);const stats=document.getElementById('dashboardStats');if(stats)stats.innerHTML=`<div class="stat"><b>${posted.length}</b><span>Posted gigs</span></div><div class="stat"><b>${mine.filter(b=>b.status==='Pending').length}</b><span>Pending requests</span></div><div class="stat"><b>${mine.filter(b=>b.status==='Accepted').length}</b><span>Accepted bookings</span></div>`;const list=document.getElementById('incomingBookings');if(!list)return;if(!mine.length){list.innerHTML='<div class="empty-state">No incoming bookings yet. Post a gig to start receiving requests.</div>'}else{list.innerHTML=mine.map(b=>`<article class="booking-row"><div><h3>${esc(b.gigTitle)}</h3><p>From ${esc(b.client)}<br>${esc(b.project)}${b.deadline?' · Deadline: '+esc(b.deadline):''}</p></div><div><span class="status-pill ${statusClass(b.status)}">${esc(b.status)}</span></div><div class="row-actions">${b.status==='Pending'?`<button class="mini-btn primary accept-booking" data-id="${esc(b.id)}">Accept</button><button class="mini-btn danger decline-booking" data-id="${esc(b.id)}">Decline</button>`:''}</div></article>`).join('');list.querySelectorAll('.accept-booking').forEach(b=>b.addEventListener('click',()=>updateBooking(b.dataset.id,'Accepted')));list.querySelectorAll('.decline-booking').forEach(b=>b.addEventListener('click',()=>updateBooking(b.dataset.id,'Declined')))}}
+function renderDashboard(){const me=(document.getElementById('gigCreator')?.value||creators[0]?.name||'Creator').trim();const mine=bookings.filter(b=>b.creator===me);const posted=gigs.filter(g=>g.creator===me);const stats=document.getElementById('dashboardStats');if(stats)stats.innerHTML=`<div class="stat"><b>${posted.length}</b><span>Posted gigs</span></div><div class="stat"><b>${mine.filter(b=>b.status==='Pending').length}</b><span>Pending requests</span></div><div class="stat"><b>${mine.filter(b=>b.status==='Accepted').length}</b><span>Accepted bookings</span></div>`;const list=document.getElementById('incomingBookings');if(!list)return;if(!mine.length){list.innerHTML='<div class="empty-state">No incoming bookings yet. Post a gig to start receiving requests.</div>'}else{list.innerHTML=mine.map(b=>`<article class="booking-row"><div><h3>${esc(b.gigTitle)}</h3><p>From ${esc(b.client)}<br>${esc(b.project)}${b.deadline?' · Deadline: '+esc(b.deadline):''}</p></div><div><span class="status-pill ${statusClass(b.status)}">${esc(b.status)}</span></div><div class="row-actions">${b.status==='Pending'?`<button class="mini-btn primary accept-booking" data-id="${esc(b.id)}">Accept</button><button class="mini-btn danger decline-booking" data-id="${esc(b.id)}">Decline</button>`:''}</div></article>`).join('');list.querySelectorAll('.accept-booking').forEach(b=>b.addEventListener('click',()=>updateBooking(b.dataset.id,'Accepted')));list.querySelectorAll('.decline-booking').forEach(b=>b.addEventListener('click',()=>updateBooking(b.dataset.id,'Declined')))}}
 function updateBooking(id,newStatus){const b=bookings.find(x=>x.id===id);if(!b)return;if(newStatus==='Accepted'){const competing=bookings.filter(x=>x.gigId===b.gigId&&x.id!==b.id&&x.status==='Pending');b.status='Accepted';competing.forEach(x=>x.status='Declined')}else b.status='Declined';saveBookings();renderAll()}
 document.getElementById('gigForm')?.addEventListener('submit',e=>{e.preventDefault();const title=document.getElementById('gigTitle').value.trim(),category=document.getElementById('gigFormCategory').value,rate=Number(document.getElementById('gigRate').value),creator=document.getElementById('gigCreator').value.trim(),description=document.getElementById('gigDescription').value.trim();const st=document.getElementById('gigStatus');if(!title||!category||!rate||!creator||!description){st.textContent='Please complete every field.';return}const creatorProfile=creators.find(c=>c.name===creator);const gig={id:'g'+Date.now(),title,category,rate,description,creator,rating:Number(creatorProfile?.rating||5),reviews:Number(creatorProfile?.reviews||0),tags:creatorProfile?.tags||[],createdAt:Date.now()};gigs.unshift(gig);saveGigs();e.target.reset();document.getElementById('gigCreator').value=creator;st.textContent='Gig posted successfully.';renderAll()});
-function closeConfirmation(){const m=document.getElementById('bookingConfirmation');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true')}}
-document.querySelectorAll('[data-close="bookingConfirmation"]').forEach(x=>x.addEventListener('click',closeConfirmation));
-document.getElementById('closeConfirmOnly')?.addEventListener('click',closeConfirmation);
-document.getElementById('viewBookingsAfterConfirm')?.addEventListener('click',()=>{closeConfirmation();openView('bookingsView')});
-document.getElementById('bookingConfirmation')?.addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeConfirmation()});
-document.getElementById('dashboardCreator')?.addEventListener('change',renderDashboard);
 function renderAll(){renderGigs();renderBookings();renderDashboard();renderCreators()}
 
 // Open the required pages from the existing layout without redesigning the homepage.
@@ -606,7 +567,7 @@ document.getElementById('bookingsBrowse')?.addEventListener('click',()=>openView
 document.getElementById('bookingsDashboard')?.addEventListener('click',()=>openView('dashboardView'));
 document.getElementById('footerDashboard')?.addEventListener('click',()=>openView('dashboardView'));
 document.getElementById('footerBookings')?.addEventListener('click',()=>openView('bookingsView'));
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('bookingModal')?.classList.contains('open'))closeBooking();else if(document.getElementById('bookingConfirmation')?.classList.contains('open'))closeConfirmation();else if(creatorModal?.classList.contains('open'))closeCreator();else closeViews()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('bookingModal')?.classList.contains('open'))closeBooking();else if(creatorModal?.classList.contains('open'))closeCreator();else closeViews()}});
 renderAll();
 
 // AI match remains functional and also considers posted gigs.
